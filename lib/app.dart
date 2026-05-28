@@ -3,6 +3,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:minito/core/theme/app_theme.dart';
+import 'package:minito/features/auth/presentation/auth_screen.dart';
+import 'package:minito/features/auth/presentation/providers/auth_provider.dart';
+import 'package:minito/features/home/presentation/home_screen.dart';
+import 'package:minito/features/meetings/presentation/meeting_detail_screen.dart';
+import 'package:minito/features/recording/presentation/record_screen.dart';
+import 'package:minito/features/recording/presentation/upload_screen.dart';
 
 class Minito extends ConsumerWidget {
   const Minito({super.key});
