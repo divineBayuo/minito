@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
-import 'package:flutter/material.dart';
 import 'package:minito/features/meetings/domain/models/meeting.dart';
 import 'package:minito/features/meetings/domain/models/meeting_output.dart';
 import 'package:minito/features/meetings/domain/models/output_type.dart';
@@ -13,25 +12,28 @@ import 'package:path_provider/path_provider.dart';
 
 part 'meeting_local_datasource.g.dart';
 
-// drift table definitions
-class MeetingsTable extends Table {
+// ── Table definitions ─────────────────────────────────────────────────────────
+// Rule: name tables in plural (Meetings), Drift generates singular data class
+// (MeetingEntry) and companion (MeetingsCompanion). No .references() — we
+// enforce relations in the repository layer instead.
+
+class MeetingEntries extends Table {
   TextColumn get id => text()();
   TextColumn get title => text()();
   DateTimeColumn get createdAt => dateTime()();
   TextColumn get audioFilePath => text()();
   IntColumn get durationSeconds => integer()();
-  TextColumn get status => text()(); // meetingstatus.name
+  TextColumn get status => text()();
   TextColumn get errorMessage => text().nullable()();
-  TextColumn get tags =>
-      text().withDefault(const Constant('[]'))(); // JSON array
+  TextColumn get tags => text().withDefault(const Constant('[]'))();
 
   @override
   Set<Column> get primaryKey => {id};
 }
 
-class TranscriptsTable extends Table {
+class TranscriptEntries extends Table {
   TextColumn get id => text()();
-  TextColumn get meetingId => text().references(MeetingsTable, #id)();
+  TextColumn get meetingId => text()(); // FK enforced in repo, not here
   TextColumn get fullText => text()();
   TextColumn get languageCode => text()();
   TextColumn get segmentsJson => text().withDefault(const Constant('[]'))();
@@ -41,10 +43,10 @@ class TranscriptsTable extends Table {
   Set<Column> get primaryKey => {id};
 }
 
-class MeetingOutputsTable extends Table {
+class MeetingOutputEntries extends Table {
   TextColumn get id => text()();
-  TextColumn get meetingId => text().references(MeetingsTable, #id)();
-  TextColumn get type => text()(); // OutputType.name
+  TextColumn get meetingId => text()(); // FK enforced in repo, not here
+  TextColumn get type => text()();
   TextColumn get markdownContent => text()();
   DateTimeColumn get generatedAt => dateTime()();
   TextColumn get modelVersion => text()();
@@ -53,8 +55,9 @@ class MeetingOutputsTable extends Table {
   Set<Column> get primaryKey => {id};
 }
 
-// database
-@DriftDatabase(tables: [MeetingsTable, TranscriptsTable, MeetingOutputsTable])
+// ── Database ──────────────────────────────────────────────────────────────────
+
+@DriftDatabase(tables: [MeetingEntries, TranscriptEntries, MeetingOutputEntries])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
@@ -69,83 +72,90 @@ class AppDatabase extends _$AppDatabase {
     });
   }
 
-  // meetings
-  Stream<List<MeetingsTableData>> watchAllMeetings() => (select(
-    meetingsTable,
-  )..orderBy([(t) => OrderingTerm.desc(t.createdAt)])).watch();
+  // ── Meetings ────────────────────────────────────────────────────────────────
 
-  Future<MeetingsTableData?> getMeetingById(String id) =>
-      (select(meetingsTable)..where((t) => t.id.equals(id))).getSingleOrNull();
+  Stream<List<MeetingEntry>> watchAllMeetings() =>
+      (select(meetingEntries)
+            ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
+          .watch();
 
-  Future<void> upsertMeeting(MeetingsTableCompanion entry) =>
-      into(meetingsTable).insertOnConflictUpdate(entry);
+  Future<MeetingEntry?> getMeetingById(String id) =>
+      (select(meetingEntries)..where((t) => t.id.equals(id)))
+          .getSingleOrNull();
+
+  Future<void> upsertMeeting(MeetingEntriesCompanion entry) =>
+      into(meetingEntries).insertOnConflictUpdate(entry);
 
   Future<void> deleteMeetingById(String id) =>
-      (delete(meetingsTable)..where((t) => t.id.equals(id))).go();
+      (delete(meetingEntries)..where((t) => t.id.equals(id))).go();
 
   Future<void> updateMeetingStatus(
     String id,
     String status, {
     String? errorMessage,
-  }) => (update(meetingsTable)..where((t) => t.id.equals(id))).write(
-    MeetingsTableCompanion(
-      status: Value(status),
-      errorMessage: Value(errorMessage),
-    ),
-  );
+  }) =>
+      (update(meetingEntries)..where((t) => t.id.equals(id))).write(
+        MeetingEntriesCompanion(
+          status: Value(status),
+          errorMessage: Value(errorMessage),
+        ),
+      );
 
-  // Transcripts
-  Future<TranscriptsTableData?> getTranscriptByMeetingId(String meetingId) =>
-      (select(
-        transcriptsTable,
-      )..where((t) => t.meetingId.equals(meetingId))).getSingleOrNull();
+  // ── Transcripts ─────────────────────────────────────────────────────────────
 
-  Future<void> upsertTranscript(TranscriptsTableCompanion entry) =>
-      into(transcriptsTable).insertOnConflictUpdate(entry);
+  Future<TranscriptEntry?> getTranscriptByMeetingId(String meetingId) =>
+      (select(transcriptEntries)
+            ..where((t) => t.meetingId.equals(meetingId)))
+          .getSingleOrNull();
 
-  // Outputs
-  Future<List<MeetingOutputsTableData>> getOutputsByMeetingId(
-    String meetingId,
-  ) => (select(
-    MeetingOutputsTable,
-  )..where((t) => t.meetingId.equals(meetingId))).get();
+  Future<void> upsertTranscript(TranscriptEntriesCompanion entry) =>
+      into(transcriptEntries).insertOnConflictUpdate(entry);
 
-  Future<void> upsertOutput(MeetingOutputsTableCompanion entry) =>
-      into(MeetingOutputsTable).insertOnConflictUpdate(entry);
+  // ── Outputs ─────────────────────────────────────────────────────────────────
+
+  Future<List<MeetingOutputEntry>> getOutputsByMeetingId(String meetingId) =>
+      (select(meetingOutputEntries)
+            ..where((t) => t.meetingId.equals(meetingId)))
+          .get();
+
+  Future<void> upsertOutput(MeetingOutputEntriesCompanion entry) =>
+      into(meetingOutputEntries).insertOnConflictUpdate(entry);
 }
 
-// mapping helpers
-extension MeetingRowMapper on MeetingsTableData {
+// ── Mapping extensions ────────────────────────────────────────────────────────
+// These convert Drift-generated row objects into your domain models.
+
+extension MeetingRowMapper on MeetingEntry {
   Meeting toDomain() => Meeting(
-    id: id,
-    title: title,
-    createdAt: createdAt,
-    audioFilePath: audioFilePath,
-    durationSeconds: durationSeconds,
-    status: MeetingStatus.values.byName(status),
-    errorMessage: errorMessage,
-    tags: List<String>.from(jsonDecode(tags) as List),
-  );
+        id: id,
+        title: title,
+        createdAt: createdAt,
+        audioFilePath: audioFilePath,
+        durationSeconds: durationSeconds,
+        status: MeetingStatus.values.byName(status),
+        errorMessage: errorMessage,
+        tags: List<String>.from(jsonDecode(tags) as List),
+      );
 }
 
-extension TranscriptRowMapper on TranscriptsTableData {
+extension TranscriptRowMapper on TranscriptEntry {
   Transcript toDomain() => Transcript(
-    id: id,
-    meetingId: meetingId,
-    fullText: fullText,
-    languageCode: languageCode,
-    segments: const [],
-    createdAt: createdAt,
-  );
+        id: id,
+        meetingId: meetingId,
+        fullText: fullText,
+        languageCode: languageCode,
+        segments: const [],
+        createdAt: createdAt,
+      );
 }
 
-extension OutputRowMapper on MeetingOutputsTableData {
+extension OutputRowMapper on MeetingOutputEntry {
   MeetingOutput toDomain() => MeetingOutput(
-    id: id,
-    meetingId: meetingId,
-    type: OutputType.values.byName(type),
-    markdownContent: markdownContent,
-    generatedAt: generatedAt,
-    modelVersion: modelVersion,
-  );
+        id: id,
+        meetingId: meetingId,
+        type: OutputType.values.byName(type),
+        markdownContent: markdownContent,
+        generatedAt: generatedAt,
+        modelVersion: modelVersion,
+      );
 }

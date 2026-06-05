@@ -48,3 +48,34 @@ build/
 .dart_tool/
 .packages
 pubspec.lock
+
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+*.g.dart
+*.freezed.dart
+
+# Secrets — NEVER commit these
+.env
+google-services.json
+GoogleService-Info.plist
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# macOS
+.DS_Store
+
+# Android
+/android/local.properties
+/android/key.properties
+*.jks
+
+# iOS
+/ios/Flutter/Generated.xcconfig
+/ios/Flutter/flutter_export_environment.sh

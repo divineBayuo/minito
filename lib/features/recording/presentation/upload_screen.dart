@@ -1,9 +1,10 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:minito/core/utils/audio_utils.dart';
+import 'package:minito/features/ai_processing/presentation/providers/processing_provider.dart';
+import 'package:minito/features/meetings/presentation/providers/meetings_provider.dart';
 
 // let the user pick an existing audio file from the device and import it
 // as a new meeting - identical pipeline as live recording
@@ -20,7 +21,10 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
   String? _error;
 
   Future<void> _pickAndUpload() async {
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
 
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
@@ -42,9 +46,13 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
     }
 
     try {
+      // 1. save meeting
       final meeting = await ref
           .read(meetingsProvider.notifier)
           .importAudioFile(file.path!, file.name);
+
+      // 2. trigger processing separately
+      ref.read(processingProvider.notifier).enqueue(meeting.id);
 
       if (mounted) context.go('/meeting/${meeting.id}');
     } catch (e) {
@@ -105,8 +113,8 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                       height: 18,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Icon(Icons.folder_open_outlined)
-            ), 
+                  : const Icon(Icons.folder_open_outlined),
+            ),
           ],
         ),
       ),

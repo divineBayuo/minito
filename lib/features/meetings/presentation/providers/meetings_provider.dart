@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
 import 'package:minito/features/meetings/data/meeting_local_datasource.dart';
 import 'package:minito/features/meetings/data/meeting_repository_impl.dart';
 import 'package:minito/features/meetings/domain/meeting_repository.dart';
@@ -11,52 +10,52 @@ import 'package:minito/features/meetings/domain/models/transcript.dart';
 import 'package:minito/features/recording/domain/models/recording.dart';
 import 'package:uuid/uuid.dart';
 
-// infrastructure providers
+// ── Infrastructure providers ──────────────────────────────────────────────────
+
 final appDatabaseProvider = Provider<AppDatabase>((_) => AppDatabase());
 
 final meetingRepositoryProvider = Provider<MeetingRepository>(
   (ref) => MeetingRepositoryImpl(ref.watch(appDatabaseProvider)),
 );
 
-// meeting list
-// stream of all meetings, newest first
+// ── Read providers ────────────────────────────────────────────────────────────
+
 final meetingsStreamProvider = StreamProvider<List<Meeting>>(
   (ref) => ref.watch(meetingRepositoryProvider).watchMeeting(),
 );
 
-// single meeting
-final meetingByIdProvider = FutureProvider.family<Meeting?, String>((
-  ref,
-  id,
-) async {
+final meetingByIdProvider =
+    FutureProvider.family<Meeting?, String>((ref, id) async {
   return ref.watch(meetingRepositoryProvider).getMeeting(id);
 });
 
-// all outputs (minutes, notes, ...) for a single meeting
 final meetingOutputsProvider =
     FutureProvider.family<List<MeetingOutput>, String>((ref, meetingId) async {
-      return ref.watch(meetingRepositoryProvider).getOutputs(meetingId);
-    });
+  return ref.watch(meetingRepositoryProvider).getOutputs(meetingId);
+});
 
-// Transcript for a single meeting
-final meetingTranscriptProvider = FutureProvider.family<Transcript?, String>((
-  ref,
-  meetingId,
-) async {
+final meetingTranscriptProvider =
+    FutureProvider.family<Transcript?, String>((ref, meetingId) async {
   return ref.watch(meetingRepositoryProvider).getTranscript(meetingId);
 });
 
-// mutations
-// exposes save/import/delete actions
-class MeetingsNotifier extends StateNotifier<void> {
-  MeetingsNotifier(this._repo, this._ref) : super(null);
+// ── Mutations ─────────────────────────────────────────────────────────────────
+// Uses Riverpod 2 Notifier (replaces deprecated StateNotifier).
+// processingProvider is NOT imported here — instead we expose a callback
+// so the caller (record_screen, upload_screen) can trigger processing
+// after saving. This breaks the circular dependency:
+//   meetings_provider → processing_provider → meeting_repository → meetings_provider
 
-  final MeetingRepository _repo;
-  final Ref _ref;
+class MeetingsNotifier extends Notifier<void> {
   final _uuid = const Uuid();
 
-  // called after a live recording
-  // creates the meeting record and kicks off ai processing
+  @override
+  void build() {}  // no initial state needed — this notifier is action-only
+
+  MeetingRepository get _repo => ref.read(meetingRepositoryProvider);
+
+  /// Saves a completed live recording as a new [Meeting] and returns it.
+  /// The caller is responsible for triggering AI processing afterward.
   Future<Meeting> saveRecording(Recording recording) async {
     final meeting = Meeting(
       id: _uuid.v4(),
@@ -66,24 +65,22 @@ class MeetingsNotifier extends StateNotifier<void> {
       durationSeconds: recording.duration.inSeconds,
     );
     await _repo.saveMeeting(meeting);
-    _ref.read(processingProvider.notifier).enqueue(meeting.id);
     return meeting;
   }
 
-  // called when the user picks existing file via upload screen
-  Future<Meeting> importAudioFile(String filePath, String orginalName) async {
+  /// Imports an existing audio file as a new [Meeting] and returns it.
+  /// The caller is responsible for triggering AI processing afterward.
+  Future<Meeting> importAudioFile(String filePath, String originalName) async {
     final file = File(filePath);
     final stat = await file.stat();
-    final duration = Duration.zero; // duration unknown for imported files
     final meeting = Meeting(
       id: _uuid.v4(),
       title: originalName.replaceAll(RegExp(r'\.[^.]+$'), ''),
       createdAt: stat.modified,
       audioFilePath: filePath,
-      durationSeconds: duration.inSeconds,
+      durationSeconds: 0,
     );
     await _repo.saveMeeting(meeting);
-    _ref.read(processingProvider.notifier).enqueue(meeting.id);
     return meeting;
   }
 
@@ -98,6 +95,6 @@ class MeetingsNotifier extends StateNotifier<void> {
   }
 }
 
-final meetingsProvider = StateNotifierProvider<MeetingsNotifier, void>(
-  (ref) => MeetingsNotifier(ref.watch(meetingRepositoryProvider), ref),
+final meetingsProvider = NotifierProvider<MeetingsNotifier, void>(
+  MeetingsNotifier.new,
 );

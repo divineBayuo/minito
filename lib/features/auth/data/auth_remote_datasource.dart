@@ -91,7 +91,7 @@ class AuthRemoteDatasource {
     return AppUser(
       id: user.uid,
       email: user.email ?? '',
-      photUrl: user.photoURL,
+      photoUrl: user.photoURL,
       createdAt: user.metadata.creationTime ?? DateTime.now(),
     );
   }

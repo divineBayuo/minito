@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:minito/core/extensions/duration_ext.dart';
+import 'package:minito/features/ai_processing/presentation/providers/processing_provider.dart';
 import 'package:minito/features/recording/presentation/providers/audio_recorder_provider.dart';
 import 'package:minito/features/recording/presentation/widgets/audio_waveform.dart';
 import 'package:minito/features/recording/presentation/widgets/recording_controls.dart';
+import 'package:minito/features/meetings/presentation/providers/meetings_provider.dart';
 
 // the main screen for capturing a new meeting audio recording
 // shows a live wavefrom, elapsed timer, and start/pause/stop controls
@@ -22,9 +23,14 @@ class RecordScreen extends ConsumerWidget {
     // when recording stops, save the meeting and go to detail
     ref.listen<RecorderState>(audioRecorderProvider, (_, next) async {
       if (next.completedRecording != null) {
+        // 1. save meeting
         final meeting = await ref
             .read(meetingsProvider.notifier)
             .saveRecording(next.completedRecording!);
+
+        // 2. trigger processing separately - no circular dependency
+        ref.read(processingProvider.notifier).enqueue(meeting.id);
+        
         notifier.reset();
         if (context.mounted) context.go('/meeting/${meeting.id}');
       }

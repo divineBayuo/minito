@@ -3,16 +3,13 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'transcript.freezed.dart';
 part 'transcript.g.dart';
 
-// a single timed word or phrase segment from Whisper's verbose JSON output
 @freezed
-class TranscriptSegment with _$TranscriptSegment {
+abstract class TranscriptSegment with _$TranscriptSegment {
   const factory TranscriptSegment({
     required int id,
-    required double,
-    start,
+    required double start,
     required double end,
     required String text,
-    // whisper confidence score 0.0 - 1.0
     @Default(1.0) double avgLogprob,
   }) = _TranscriptSegment;
 
@@ -20,9 +17,8 @@ class TranscriptSegment with _$TranscriptSegment {
       _$TranscriptSegmentFromJson(json);
 }
 
-// the full transcrirption result for a meeting
 @freezed
-class Transcript with _$Transcript {
+abstract class Transcript with _$Transcript {
   const factory Transcript({
     required String id,
     required String meetingId,

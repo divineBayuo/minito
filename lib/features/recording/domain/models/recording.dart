@@ -3,15 +3,22 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'recording.freezed.dart';
 part 'recording.g.dart';
 
-// represents an in-progress or freshly-completed audio recording
-// before it has been converted into a meeting and persisted
+class DurationConverter implements JsonConverter<Duration, int> {
+  const DurationConverter();
+
+  @override
+  Duration fromJson(int json) => Duration(microseconds: json);
+
+  @override
+  int toJson(Duration object) => object.inMicroseconds;
+}
+
 @freezed
-class Recording with _$Recording {
+abstract class Recording with _$Recording {
   const factory Recording({
     required String filePath,
-    required Duration duration,
+    @DurationConverter() required Duration duration,
     required DateTime startedAt,
-    // file size in bytes, populated once recording is stopped
     @Default(0) int fileSizeBytes,
   }) = _Recording;
 
