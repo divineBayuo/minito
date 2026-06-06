@@ -34,7 +34,7 @@ class RecordingCard extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: _statusColor(meeting.status).withOpacity(0.1),
+                  color: _statusColor(meeting.status).withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(

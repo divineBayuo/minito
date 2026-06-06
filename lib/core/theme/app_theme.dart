@@ -53,7 +53,7 @@ abstract class AppTheme {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: colorScheme.outlineVariant.withOpacity(0.5)),
+          side: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.5)),
         ),
         color: brightness == Brightness.light
             ? AppColors.cardLight

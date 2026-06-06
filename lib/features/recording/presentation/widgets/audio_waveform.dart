@@ -78,7 +78,7 @@ class _WaveformPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = isActive ? color : color.withOpacity(0.25)
+      ..color = isActive ? color : color.withValues(alpha: 0.25)
       ..style = PaintingStyle.fill;
 
     final barWidth = size.width / (barCount * 2 - 1);

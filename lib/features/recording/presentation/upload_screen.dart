@@ -26,7 +26,7 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
       _error = null;
     });
 
-    final result = await FilePicker.platform.pickFiles(
+    final result = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: AudioUtils.allowedUploadExtensions,
     );
@@ -78,7 +78,7 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
             Icon(
               Icons.upload_file_rounded,
               size: 80,
-              color: theme.colorScheme.primary.withOpacity(0.6),
+              color: theme.colorScheme.primary.withValues(alpha: 0.6),
             ),
             const SizedBox(height: 24),
             Text(

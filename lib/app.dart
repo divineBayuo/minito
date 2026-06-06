@@ -39,14 +39,14 @@ class Minito extends ConsumerWidget {
         return null;
       },
       routes: [
-        GoRoute(path: '/auth', builder: (_, __) => const AuthScreen()),
+        GoRoute(path: '/auth', builder: (_, _) => const AuthScreen()),
         ShellRoute(
           // shell wraps screens that share the bottom navbar
           builder: (context, state, child) => AppShell(child: child),
           routes: [
-            GoRoute(path: '/home', builder: (_, __) => const HomeScreen()),
-            GoRoute(path: '/record', builder: (_, __) => const RecordScreen()),
-            GoRoute(path: '/upload', builder: (_, __) => const UploadScreen()),
+            GoRoute(path: '/home', builder: (_, _) => const HomeScreen()),
+            GoRoute(path: '/record', builder: (_, _) => const RecordScreen()),
+            GoRoute(path: '/upload', builder: (_, _) => const UploadScreen()),
           ],
         ),
         GoRoute(

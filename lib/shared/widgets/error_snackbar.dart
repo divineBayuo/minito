@@ -1,6 +1,5 @@
 // shows a consistently-styled error snackbar from anywhere in the widget tree
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 
 void showErrorSnackBar(BuildContext context, String message) {
   ScaffoldMessenger.of(context)

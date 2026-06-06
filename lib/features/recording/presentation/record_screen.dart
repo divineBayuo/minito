@@ -55,8 +55,8 @@ class RecordScreen extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
                 color: state.status == RecordingStatus.recording
-                    ? Colors.red.withOpacity(0.12)
-                    : theme.colorScheme.surfaceVariant,
+                    ? Colors.red.withValues(alpha: 0.12)
+                    : theme.colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(

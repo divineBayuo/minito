@@ -59,7 +59,7 @@ class ProcessingStatus extends StatelessWidget {
               const SizedBox(height: 12),
               LinearProgressIndicator(
                 color: color,
-                backgroundColor: color.withOpacity(0.12),
+                backgroundColor: color.withValues(alpha: 0.12),
               ),
             ],
           ],
