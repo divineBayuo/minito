@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:minito/core/theme/app_theme.dart';
-import 'package:minito/features/auth/presentation/auth_screen.dart';
+import 'package:minito/features/auth/presentation/auth_screen.dart' as auth;
 import 'package:minito/features/auth/presentation/providers/auth_provider.dart';
-import 'package:minito/features/home/presentation/home_screen.dart';
+import 'package:minito/features/home/presentation/home_screen.dart' as home;
 import 'package:minito/features/meetings/presentation/meeting_detail_screen.dart';
 import 'package:minito/features/recording/presentation/record_screen.dart';
 import 'package:minito/features/recording/presentation/upload_screen.dart';
@@ -39,12 +39,12 @@ class Minito extends ConsumerWidget {
         return null;
       },
       routes: [
-        GoRoute(path: '/auth', builder: (_, _) => const AuthScreen()),
+        GoRoute(path: '/auth', builder: (_, _) => const auth.AuthScreen()),
         ShellRoute(
           // shell wraps screens that share the bottom navbar
           builder: (context, state, child) => AppShell(child: child),
           routes: [
-            GoRoute(path: '/home', builder: (_, _) => const HomeScreen()),
+            GoRoute(path: '/home', builder: (_, _) => const home.HomeScreen()),
             GoRoute(path: '/record', builder: (_, _) => const RecordScreen()),
             GoRoute(path: '/upload', builder: (_, _) => const UploadScreen()),
           ],
@@ -77,6 +77,7 @@ class AppShell extends StatelessWidget {
     };
 
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       body: child,
       bottomNavigationBar: NavigationBar(
         selectedIndex: selectedIndex,

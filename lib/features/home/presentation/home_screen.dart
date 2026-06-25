@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:minito/features/home/presentation/widgets/record_card.dart';
 import 'package:minito/features/meetings/presentation/providers/meetings_provider.dart';
 
-// the default landing screen: a searchable list of all meetings
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
@@ -14,85 +13,304 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   String _query = '';
+  final _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final meetingsAsync = ref.watch(meetingsStreamProvider);
     final theme = Theme.of(context);
+    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Minito'),
-        actions: [
-          IconButton(
-            onPressed: () {
-              /* settings*/
-            },
-            icon: const Icon(Icons.settings_outlined),
-          ),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(64),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-            child: SearchBar(
-              hintText: 'Search meetings...',
-              leading: const Icon(Icons.search),
-              onChanged: (v) => setState(() => _query = v.toLowerCase()),
-            ),
+      backgroundColor: theme.colorScheme.surfaceContainerLowest,
+      body: SafeArea(
+        child: Padding(
+          // keyboard fix — body shifts up by exact keyboard height
+          padding: EdgeInsets.only(bottom: keyboardHeight),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Header ──────────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                child: Row(
+                  children: [
+                    // Logo mark
+                    Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.onSurface,
+                        borderRadius: BorderRadius.circular(9),
+                      ),
+                      child: Center(
+                        child: Text(
+                          'm',
+                          style: TextStyle(
+                            fontFamily: 'Georgia',
+                            fontStyle: FontStyle.italic,
+                            fontSize: 20,
+                            color: theme.colorScheme.surface,
+                            height: 1,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Minito',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                    const Spacer(),
+                    _IconButton(
+                      icon: Icons.settings_outlined,
+                      onTap: () { /* settings */ },
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // ── Search ──────────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: _SearchField(
+                  controller: _searchController,
+                  onChanged: (v) => setState(() => _query = v.toLowerCase()),
+                ),
+              ),
+
+              const SizedBox(height: 4),
+
+              // ── List ────────────────────────────────────────────
+              Expanded(
+                child: meetingsAsync.when(
+                  data: (meetings) {
+                    final filtered = _query.isEmpty
+                        ? meetings
+                        : meetings
+                              .where(
+                                (m) =>
+                                    m.title.toLowerCase().contains(_query),
+                              )
+                              .toList();
+
+                    if (filtered.isEmpty) {
+                      return _EmptyState(isSearch: _query.isNotEmpty);
+                    }
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
+                          child: Row(
+                            children: [
+                              Text(
+                                'Recent',
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                  letterSpacing: 0.6,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const Spacer(),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.surfaceContainerHigh,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  '${filtered.length} meeting${filtered.length == 1 ? '' : 's'}',
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Expanded(
+                          child: ListView.separated(
+                            padding: const EdgeInsets.fromLTRB(12, 4, 12, 24),
+                            itemCount: filtered.length,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(height: 8),
+                            itemBuilder: (context, i) {
+                              final meeting = filtered[i];
+                              return RecordingCard(
+                                meeting: meeting,
+                                onTap: () =>
+                                    context.go('/meeting/${meeting.id}'),
+                                onDelete: () => ref
+                                    .read(meetingsProvider.notifier)
+                                    .deleteMeeting(meeting.id),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                  error: (e, _) => Center(
+                    child: Text(
+                      'Something went wrong.',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                  loading: () => const Center(
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
-      body: meetingsAsync.when(
-        data: (meetings) {
-          final filtered = _query.isEmpty
-              ? meetings
-              : meetings
-                    .where((m) => m.title.toLowerCase().contains(_query))
-                    .toList();
+    );
+  }
+}
 
-          if (filtered.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.mic_none_rounded,
-                    size: 64,
-                    color: theme.colorScheme.outlineVariant,
+// ── Sub-widgets ──────────────────────────────────────────────────────────────
+
+class _SearchField extends StatelessWidget {
+  const _SearchField({required this.controller, required this.onChanged});
+
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      height: 44,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: TextField(
+        controller: controller,
+        onChanged: onChanged,
+        style: theme.textTheme.bodyMedium,
+        decoration: InputDecoration(
+          hintText: 'Search meetings...',
+          hintStyle: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant.withOpacity(0.6),
+          ),
+          prefixIcon: Icon(
+            Icons.search_rounded,
+            size: 20,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+          suffixIcon: controller.text.isNotEmpty
+              ? IconButton(
+                  icon: Icon(
+                    Icons.close_rounded,
+                    size: 18,
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    _query.isEmpty
-                        ? 'No meetings yet.\nTap Record to start.'
-                        : 'No results for "$_query"',
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
+                  onPressed: () {
+                    controller.clear();
+                    onChanged('');
+                  },
+                )
+              : null,
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(vertical: 12),
+        ),
+      ),
+    );
+  }
+}
+
+class _IconButton extends StatelessWidget {
+  const _IconButton({required this.icon, required this.onTap});
+
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainerHigh,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(icon, size: 18, color: theme.colorScheme.onSurface),
+      ),
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  const _EmptyState({required this.isSearch});
+
+  final bool isSearch;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHigh,
+                borderRadius: BorderRadius.circular(16),
               ),
-            );
-          }
-
-          return ListView.builder(
-            padding: const EdgeInsets.only(top: 8, bottom: 80),
-            itemCount: filtered.length,
-            itemBuilder: (context, i) {
-              final meeting = filtered[i];
-              return RecordingCard(
-                meeting: meeting,
-                onTap: () => context.go('/meeting/${meeting.id}'),
-                onDelete: () => ref
-                    .read(meetingsProvider.notifier)
-                    .deleteMeeting(meeting.id),
-              );
-            },
-          );
-        },
-        error: (e, _) => Center(child: Text('Error: $e')),
-        loading: () => const Center(child: CircularProgressIndicator()),
+              child: Icon(
+                isSearch
+                    ? Icons.search_off_rounded
+                    : Icons.mic_none_rounded,
+                size: 30,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              isSearch ? 'No results found' : 'No meetings yet',
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              isSearch
+                  ? 'Try a different search term.'
+                  : 'Tap Record to capture your first meeting.',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
