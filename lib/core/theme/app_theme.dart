@@ -1,110 +1,51 @@
-// produces themedata for both light and dark
-// uses material 3 with a custom colorscheme derived
-// from appcolors
-
 import 'package:flutter/material.dart';
-import 'package:minito/core/theme/app_colors.dart';
 
-abstract class AppTheme {
-  static ThemeData light() => _build(
-    brightness: Brightness.light,
-    colorScheme: ColorScheme.fromSeed(
-      seedColor: AppColors.primary,
-      brightness: Brightness.light,
-      surface: AppColors.surfaceLight,
-      onSurface: AppColors.textPrimary,
-    ),
-  );
+class AppTheme {
+  static const _black = Color(0xFF000000);
+  static const _white = Color(0xFFFFFFFF);
+  static const _grey = Color(0xFF7F7F7F);
+  static const _orange = Color(0xFFF58A07);
+  static const _yellow = Color(0xFFF7CB15);
 
-  static ThemeData dark() => _build(
-    brightness: Brightness.dark,
-    colorScheme: ColorScheme.fromSeed(
-      seedColor: AppColors.primaryDark,
-      brightness: Brightness.dark,
-      surface: AppColors.surfaceDark,
-      onSurface: AppColors.textPrimaryDark,
-    ),
-  );
-
-  static ThemeData _build({
-    required Brightness brightness,
-    required ColorScheme colorScheme,
-  }) {
+  static ThemeData light() {
     return ThemeData(
       useMaterial3: true,
-      colorScheme: colorScheme,
-      brightness: brightness,
-
-      // typography
-      // use system default fonts; override specific styles below
-      textTheme: const TextTheme(
-        headlineLarge: TextStyle(
-          fontWeight: FontWeight.w700,
-          letterSpacing: -0.5,
-        ),
-        headlineMedium: TextStyle(fontWeight: FontWeight.w600),
-        titleLarge: TextStyle(fontWeight: FontWeight.w600),
-        bodyLarge: TextStyle(height: 1.6),
-        bodyMedium: TextStyle(height: 1.5),
+      colorScheme: ColorScheme.light(
+        primary: _orange,
+        secondary: _yellow,
+        onPrimary: _white,
+        onSecondary: _black,
+        surface: _white,
+        onSurface: _black,
+        surfaceContainerLowest: const Color(0xFFF5F5F5),
+        surfaceContainerHigh: const Color(0xFFEBEBEB),
+        onSurfaceVariant: _grey,
+        outline: const Color(0xFFD0D0D0),
+        outlineVariant: const Color(0xFFE0E0E0),
+        error: const Color(0xFFD32F2F),
       ),
+      fontFamily: 'Bricolage Grotesque'
+    );
+  }
 
-      // cards
-      cardTheme: CardThemeData(
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.5)),
-        ),
-        color: brightness == Brightness.light
-            ? AppColors.cardLight
-            : AppColors.cardDark,
+  static ThemeData dark() {
+    return ThemeData(
+      useMaterial3: true,
+      colorScheme: ColorScheme.dark(
+        primary: _orange,
+        secondary: _yellow,
+        onPrimary: _white,
+        onSecondary: _black,
+        surface: const Color(0xFF1A1A1A),
+        onSurface: _white,
+        surfaceContainerLowest: const Color(0xFF111111),
+        surfaceContainerHigh: const Color(0xFF2A2A2A),
+        onSurfaceVariant: _grey,
+        outline: const Color(0xFF3A3A3A),
+        outlineVariant: const Color(0xFF2E2E2E),
+        error: const Color(0xFFEF5350),
       ),
-
-      // appbar
-      appBarTheme: AppBarTheme(
-        centerTitle: false,
-        elevation: 0,
-        scrolledUnderElevation: 1,
-        backgroundColor: brightness == Brightness.light
-            ? AppColors.surfaceLight
-            : AppColors.surfaceDark,
-        foregroundColor: brightness == Brightness.light
-            ? AppColors.textPrimary
-            : AppColors.textPrimaryDark,
-      ),
-
-      // navigation bar
-      navigationBarTheme: NavigationBarThemeData(
-        elevation: 0,
-        height: 64,
-        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-        indicatorShape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-
-      // filled buttons
-      filledButtonTheme: FilledButtonThemeData(
-        style: FilledButton.styleFrom(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-        ),
-      ),
-
-      // input fields
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 14,
-        ),
-      ),
+      fontFamily: 'Bricolage Grotesque'
     );
   }
 }

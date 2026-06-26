@@ -31,36 +31,61 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       backgroundColor: theme.colorScheme.surfaceContainerLowest,
       body: SafeArea(
         child: Padding(
-          // keyboard fix — body shifts up by exact keyboard height
           padding: EdgeInsets.only(bottom: keyboardHeight),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Header ──────────────────────────────────────────
+              // ── Header ──────────────────────────────────────
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
                 child: Row(
                   children: [
-                    // Logo mark
-                    Container(
-                      width: 34,
-                      height: 34,
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.onSurface,
-                        borderRadius: BorderRadius.circular(9),
-                      ),
-                      child: Center(
-                        child: Text(
-                          'm',
-                          style: TextStyle(
-                            fontFamily: 'Georgia',
-                            fontStyle: FontStyle.italic,
-                            fontSize: 20,
-                            color: theme.colorScheme.surface,
-                            height: 1,
+                    // Logo mark — black square, orange accent dot
+                    Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Container(
+                          width: 65,
+                          height: 65,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF000000),
+                            borderRadius: BorderRadius.circular(9),
+                          ),
+                          child: Center(
+                            child: /* Text(
+                              'm',
+                              style: TextStyle(
+                                fontFamily: 'Georgia',
+                                fontStyle: FontStyle.italic,
+                                fontSize: 20,
+                                color: Color(0xFFFFFFFF),
+                                height: 1,
+                              ),
+                            ), */ Image.asset(
+                              'assets/icon/minito_icon.png',
+                              width: 50,
+                              height: 50,
+                            ),
                           ),
                         ),
-                      ),
+                        // small orange accent dot
+                        Positioned(
+                          right: -3,
+                          top: -3,
+                          child: Container(
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primary,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: theme.colorScheme.surfaceContainerLowest,
+                                width: 1.5,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(width: 10),
                     Text(
@@ -68,20 +93,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       style: theme.textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w500,
                         letterSpacing: -0.3,
+                        color: theme.colorScheme.onSurface,
+                        fontFamily: 'Bricolage Grotesque',
                       ),
                     ),
                     const Spacer(),
-                    _IconButton(
-                      icon: Icons.settings_outlined,
-                      onTap: () { /* settings */ },
-                    ),
+                    _IconButton(icon: Icons.settings_outlined, onTap: () {}),
                   ],
                 ),
               ),
 
               const SizedBox(height: 16),
 
-              // ── Search ──────────────────────────────────────────
+              // ── Search ───────────────────────────────────────
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: _SearchField(
@@ -92,7 +116,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
               const SizedBox(height: 4),
 
-              // ── List ────────────────────────────────────────────
+              // ── List ─────────────────────────────────────────
               Expanded(
                 child: meetingsAsync.when(
                   data: (meetings) {
@@ -100,8 +124,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ? meetings
                         : meetings
                               .where(
-                                (m) =>
-                                    m.title.toLowerCase().contains(_query),
+                                (m) => m.title.toLowerCase().contains(_query),
                               )
                               .toList();
 
@@ -122,6 +145,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   color: theme.colorScheme.onSurfaceVariant,
                                   letterSpacing: 0.6,
                                   fontWeight: FontWeight.w500,
+                                  fontFamily: 'Bricolage Grotesque',
                                 ),
                               ),
                               const Spacer(),
@@ -131,13 +155,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   vertical: 2,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: theme.colorScheme.surfaceContainerHigh,
+                                  color: theme.colorScheme.primary.withOpacity(
+                                    0.12,
+                                  ),
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Text(
                                   '${filtered.length} meeting${filtered.length == 1 ? '' : 's'}',
                                   style: theme.textTheme.labelSmall?.copyWith(
-                                    color: theme.colorScheme.onSurfaceVariant,
+                                    color: theme.colorScheme.primary,
+                                    fontWeight: FontWeight.w500,
+                                    fontFamily: 'Bricolage Grotesque',
                                   ),
                                 ),
                               ),
@@ -171,11 +199,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       'Something went wrong.',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
+                        fontFamily: 'Bricolage Grotesque',
                       ),
                     ),
                   ),
-                  loading: () => const Center(
-                    child: CircularProgressIndicator(strokeWidth: 2),
+                  loading: () => Center(
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: theme.colorScheme.primary,
+                    ),
                   ),
                 ),
               ),
@@ -201,8 +233,9 @@ class _SearchField extends StatelessWidget {
     return Container(
       height: 44,
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHigh,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: theme.colorScheme.outlineVariant, width: 0.5),
       ),
       child: TextField(
         controller: controller,
@@ -211,7 +244,8 @@ class _SearchField extends StatelessWidget {
         decoration: InputDecoration(
           hintText: 'Search meetings...',
           hintStyle: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant.withOpacity(0.6),
+            color: theme.colorScheme.onSurfaceVariant,
+            fontFamily: 'Bricolage Grotesque',
           ),
           prefixIcon: Icon(
             Icons.search_rounded,
@@ -281,15 +315,14 @@ class _EmptyState extends StatelessWidget {
               width: 64,
               height: 64,
               decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHigh,
+                // orange tint for empty state icon background
+                color: theme.colorScheme.primary.withOpacity(0.10),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Icon(
-                isSearch
-                    ? Icons.search_off_rounded
-                    : Icons.mic_none_rounded,
+                isSearch ? Icons.search_off_rounded : Icons.mic_none_rounded,
                 size: 30,
-                color: theme.colorScheme.onSurfaceVariant,
+                color: theme.colorScheme.primary,
               ),
             ),
             const SizedBox(height: 16),
@@ -297,6 +330,8 @@ class _EmptyState extends StatelessWidget {
               isSearch ? 'No results found' : 'No meetings yet',
               style: theme.textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.w500,
+                color: theme.colorScheme.onSurface,
+                fontFamily: 'Bricolage Grotesque',
               ),
             ),
             const SizedBox(height: 6),
@@ -307,6 +342,7 @@ class _EmptyState extends StatelessWidget {
               textAlign: TextAlign.center,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
+                fontFamily: 'Bricolage Grotesque',
               ),
             ),
           ],

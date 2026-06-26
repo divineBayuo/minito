@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:minito/features/auth/presentation/providers/auth_provider.dart';
 
 class AuthScreen extends ConsumerStatefulWidget {
@@ -51,7 +52,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
     final theme = Theme.of(context);
-    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+    //final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
 
     ref.listen(authProvider, (_, next) {
       if (next.error != null) _showError(next.error!);
@@ -60,121 +61,144 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     return Scaffold(
       backgroundColor: theme.colorScheme.surfaceContainerLowest,
       body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.only(bottom: keyboardHeight),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const SizedBox(height: 40),
-
-                // ── Logo block ─────────────────────────────────
-                Column(
-                  children: [
-                    Container(
-                      width: 56,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.onSurface,
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      child: Center(
-                        child: Text(
-                          'm',
-                          style: TextStyle(
-                            fontFamily: 'Georgia',
-                            fontStyle: FontStyle.italic,
-                            fontSize: 32,
-                            color: theme.colorScheme.surface,
-                            height: 1,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: 48),
+        
+              // ── Logo block ───────────────────────────────
+              Column(
+                children: [
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        width: 65,
+                        height: 65,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF000000),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Center(
+                          child: /* Text(
+                            'm',
+                            style: TextStyle(
+                              fontFamily: 'Georgia',
+                              fontStyle: FontStyle.italic,
+                              fontSize: 34,
+                              color: Color(0xFFFFFFFF),
+                              height: 1,
+                            ),
+                          ), */ Image.asset(
+                            'assets/icon/minito_icon.png',
+                            width: 50,
+                            height: 50,
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Minito',
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: -0.4,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Your AI meeting assistant',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 32),
-
-                // ── Segmented tab switcher ─────────────────────
-                _SegmentedTabs(controller: _tabController),
-
-                const SizedBox(height: 24),
-
-                // ── Forms ─────────────────────────────────────
-                // ── Forms ─────────────────────────────────────────────────
-                AnimatedSize(
-                  duration: const Duration(milliseconds: 200),
-                  curve: Curves.easeInOut,
-                  child: _tabController.index == 0
-                      ? _SignInForm(
-                          formKey: _signInFormKey,
-                          emailCtrl: _emailCtrl,
-                          passwordCtrl: _passwordCtrl,
-                          obscurePassword: _obscurePassword,
-                          onToggleObscure: () => setState(
-                            () => _obscurePassword = !_obscurePassword,
+                      // orange accent dot
+                      Positioned(
+                        right: -4,
+                        top: -4,
+                        child: Container(
+                          width: 14,
+                          height: 14,
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primary,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: theme.colorScheme.surfaceContainerLowest,
+                              width: 2,
+                            ),
                           ),
-                          onSubmit: () => ref
-                              .read(authProvider.notifier)
-                              .signInWithEmail(
-                                email: _emailCtrl.text.trim(),
-                                password: _passwordCtrl.text,
-                              ),
-                          isLoading: authState.isLoading,
-                        )
-                      : _SignUpForm(
-                          formKey: _signUpFormKey,
-                          emailCtrl: _emailCtrl,
-                          passwordCtrl: _passwordCtrl,
-                          nameCtrl: _nameCtrl,
-                          obscurePassword: _obscurePassword,
-                          onToggleObscure: () => setState(
-                            () => _obscurePassword = !_obscurePassword,
-                          ),
-                          onSubmit: () => ref
-                              .read(authProvider.notifier)
-                              .signUpWithEmail(
-                                email: _emailCtrl.text.trim(),
-                                password: _passwordCtrl.text,
-                                displayName: _nameCtrl.text.trim(),
-                              ),
-                          isLoading: authState.isLoading,
                         ),
-                ),
-
-                // ── Divider ───────────────────────────────────
-                const SizedBox(height: 40),
-                _OrDivider(),
-
-                const SizedBox(height: 26),
-
-                // ── Google button ─────────────────────────────
-                _GoogleButton(
-                  isLoading: authState.isLoading,
-                  onTap: () =>
-                      ref.read(authProvider.notifier).signInWithGoogle(),
-                ),
-
-                const SizedBox(height: 24),
-              ],
-            ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    'Minito',
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontFamily: 'Bricolage Grotesque',
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: -0.4,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Your AI meeting assistant',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      fontFamily: 'Bricolage Grotesque'
+                    ),
+                  ),
+                ],
+              ),
+        
+              const SizedBox(height: 36),
+        
+              // ── Segmented tabs ───────────────────────────
+              _SegmentedTabs(controller: _tabController),
+        
+              const SizedBox(height: 24),
+        
+              // ── Forms (no fixed height) ──────────────────
+              AnimatedSize(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeInOut,
+                child: _tabController.index == 0
+                    ? _SignInForm(
+                        formKey: _signInFormKey,
+                        emailCtrl: _emailCtrl,
+                        passwordCtrl: _passwordCtrl,
+                        obscurePassword: _obscurePassword,
+                        onToggleObscure: () => setState(
+                          () => _obscurePassword = !_obscurePassword,
+                        ),
+                        onSubmit: () => ref
+                            .read(authProvider.notifier)
+                            .signInWithEmail(
+                              email: _emailCtrl.text.trim(),
+                              password: _passwordCtrl.text,
+                            ),
+                        isLoading: authState.isLoading,
+                      )
+                    : _SignUpForm(
+                        formKey: _signUpFormKey,
+                        emailCtrl: _emailCtrl,
+                        passwordCtrl: _passwordCtrl,
+                        nameCtrl: _nameCtrl,
+                        obscurePassword: _obscurePassword,
+                        onToggleObscure: () => setState(
+                          () => _obscurePassword = !_obscurePassword,
+                        ),
+                        onSubmit: () => ref
+                            .read(authProvider.notifier)
+                            .signUpWithEmail(
+                              email: _emailCtrl.text.trim(),
+                              password: _passwordCtrl.text,
+                              displayName: _nameCtrl.text.trim(),
+                            ),
+                        isLoading: authState.isLoading,
+                      ),
+              ),
+        
+              const SizedBox(height: 8),
+              _OrDivider(),
+              const SizedBox(height: 16),
+        
+              _GoogleButton(
+                isLoading: authState.isLoading,
+                onTap: () =>
+                    ref.read(authProvider.notifier).signInWithGoogle(),
+              ),
+        
+              const SizedBox(height: 32),
+            ],
           ),
         ),
       ),
@@ -182,7 +206,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
   }
 }
 
-// ── Segmented tab switcher ───────────────────────────────────────────────────
+// ── Segmented tabs ───────────────────────────────────────────────────────────
 
 class _SegmentedTabs extends StatefulWidget {
   const _SegmentedTabs({required this.controller});
@@ -246,25 +270,45 @@ class _Tab extends StatelessWidget {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           decoration: BoxDecoration(
+            // active tab gets orange underline accent via bottom border
             color: selected ? theme.colorScheme.surface : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
             border: selected
                 ? Border.all(
-                    color: theme.colorScheme.outlineVariant.withOpacity(0.5),
+                    color: theme.colorScheme.outlineVariant,
                     width: 0.5,
                   )
                 : null,
           ),
-          child: Center(
-            child: Text(
-              label,
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: selected
-                    ? theme.colorScheme.onSurface
-                    : theme.colorScheme.onSurfaceVariant,
-                fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
+          child: Stack(
+            alignment: Alignment.bottomCenter,
+            children: [
+              Center(
+                child: Text(
+                  label,
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: selected
+                        ? theme.colorScheme.onSurface
+                        : theme.colorScheme.onSurfaceVariant,
+                    fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
+                    fontFamily: 'Bricolage Grotesque'
+                  ),
+                ),
               ),
-            ),
+              // orange underline on active tab
+              if (selected)
+                Positioned(
+                  bottom: 4,
+                  child: Container(
+                    width: 16,
+                    height: 2,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
       ),
@@ -304,6 +348,7 @@ class _AuthField extends StatelessWidget {
         Text(
           label,
           style: theme.textTheme.labelSmall?.copyWith(
+            fontFamily: 'Bricolage Grotesque',
             color: theme.colorScheme.onSurfaceVariant,
             fontWeight: FontWeight.w500,
             letterSpacing: 0.3,
@@ -316,9 +361,16 @@ class _AuthField extends StatelessWidget {
           obscureText: obscureText,
           textInputAction: textInputAction,
           validator: validator,
-          style: theme.textTheme.bodyMedium,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurface,
+            fontFamily: 'Bricolage Grotesque',
+          ),
           decoration: InputDecoration(
-            prefixIcon: Icon(icon, size: 18),
+            prefixIcon: Icon(
+              icon,
+              size: 18,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
             suffixIcon: suffixIcon,
             filled: true,
             fillColor: theme.colorScheme.surface,
@@ -338,9 +390,10 @@ class _AuthField extends StatelessWidget {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
+              // orange focus ring
               borderSide: BorderSide(
-                color: theme.colorScheme.onSurface,
-                width: 1,
+                color: theme.colorScheme.primary,
+                width: 1.5,
               ),
             ),
             errorBorder: OutlineInputBorder(
@@ -352,7 +405,10 @@ class _AuthField extends StatelessWidget {
             ),
             focusedErrorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: theme.colorScheme.error, width: 1),
+              borderSide: BorderSide(
+                color: theme.colorScheme.error,
+                width: 1.5,
+              ),
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 14,
@@ -365,7 +421,7 @@ class _AuthField extends StatelessWidget {
   }
 }
 
-// ── Primary action button ────────────────────────────────────────────────────
+// ── Primary button ───────────────────────────────────────────────────────────
 
 class _PrimaryButton extends StatelessWidget {
   const _PrimaryButton({
@@ -386,8 +442,10 @@ class _PrimaryButton extends StatelessWidget {
       child: FilledButton(
         onPressed: isLoading ? null : onTap,
         style: FilledButton.styleFrom(
-          backgroundColor: theme.colorScheme.onSurface,
-          foregroundColor: theme.colorScheme.surface,
+          // orange primary button
+          backgroundColor: theme.colorScheme.primary,
+          foregroundColor: theme.colorScheme.onPrimary,
+          disabledBackgroundColor: theme.colorScheme.primary.withOpacity(0.4),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -398,10 +456,10 @@ class _PrimaryButton extends StatelessWidget {
                 height: 20,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: theme.colorScheme.surface,
+                  color: theme.colorScheme.onPrimary,
                 ),
               )
-            : Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
+            : Text(label, style: const TextStyle(fontWeight: FontWeight.w600, fontFamily: 'Bricolage Grotesque')),
       ),
     );
   }
@@ -427,6 +485,7 @@ class _OrDivider extends StatelessWidget {
             'or',
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
+              fontFamily: 'Bricolage Grotesque',
             ),
           ),
         ),
@@ -474,21 +533,27 @@ class _GoogleButton extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
               child: Center(
-                child: Text(
+                child: /* Text(
                   'G',
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
+                ), */ FaIcon(
+                  FontAwesomeIcons.google,
+                  color: theme.colorScheme.primary,
+                  size: 15,
                 ),
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 15),
             Text(
               'Continue with Google',
               style: theme.textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.w500,
+                color: theme.colorScheme.onSurface,
+                fontFamily: 'Bricolage Grotesque'
               ),
             ),
           ],
@@ -561,12 +626,14 @@ class _SignInForm extends StatelessWidget {
             child: TextButton(
               onPressed: () {},
               style: TextButton.styleFrom(
+                foregroundColor: theme.colorScheme.primary,
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
               ),
               child: Text(
                 'Forgot password?',
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+                  color: theme.colorScheme.primary,
+                  fontFamily: 'Bricolage Grotesque'
                 ),
               ),
             ),
