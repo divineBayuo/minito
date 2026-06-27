@@ -1,6 +1,8 @@
 // infrastructure providers
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
+//import 'package:flutter_riverpod/legacy.dart';
 import 'package:minito/features/auth/data/auth_remote_datasource.dart';
 import 'package:minito/features/auth/data/auth_repository_impl.dart';
 import 'package:minito/features/auth/domain/auth_repository.dart';
@@ -25,9 +27,14 @@ class AuthState {
 
   bool get isLoggedIn => user != null;
 
-  AuthState copyWith({AppUser? user, bool? isLoading, String? error}) {
+  AuthState copyWith({
+    AppUser? user,
+    bool clearUser = false,
+    bool? isLoading,
+    String? error,
+  }) {
     return AuthState(
-      user: user ?? this.user,
+      user: clearUser ? null : (user ?? this.user),
       isLoading: isLoading ?? this.isLoading,
       error: error,
     );
@@ -36,15 +43,28 @@ class AuthState {
 
 // the main auth notifier, listens to firebase auth state changes
 // and exposes sign in/sign up/sign out actions to the UI
-class AuthNotifier extends StateNotifier<AuthState> {
-  AuthNotifier(this._repo) : super(const AuthState(isLoading: true)) {
-    // subscribe to the auth state stream immediately
-    _repo.authStateChanges.listen((user) {
+class AuthNotifier extends Notifier<AuthState> {
+  StreamSubscription<AppUser?>? _authSub;
+
+  @override
+  AuthState build() {
+    final repo = ref.watch(authRepositoryProvider);
+
+    // cancel any previous sub when provider rebuilds
+    _authSub?.cancel();
+
+    // listen to FIrebase auth state
+    _authSub = repo.authStateChanges.listen((user) {
       state = AuthState(user: user);
     });
+
+    // clean up when provider is disposed
+    ref.onDispose(() => _authSub?.cancel());
+
+    return const AuthState(isLoading: true);
   }
 
-  final AuthRepository _repo;
+  AuthRepository get _repo => ref.read(authRepositoryProvider);
 
   Future<void> signInWithEmail({
     required String email,
@@ -96,8 +116,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 }
 
-final authProvider = StateNotifierProvider<AuthNotifier, AuthState>(
-  (ref) => AuthNotifier(ref.watch(authRepositoryProvider)),
+final authProvider = NotifierProvider<AuthNotifier, AuthState>(
+  AuthNotifier.new,
 );
 
 // convenient provider which returns only the current appuser or null

@@ -8,9 +8,6 @@ import 'package:minito/features/recording/presentation/widgets/audio_waveform.da
 import 'package:minito/features/recording/presentation/widgets/recording_controls.dart';
 import 'package:minito/features/meetings/presentation/providers/meetings_provider.dart';
 
-// the main screen for capturing a new meeting audio recording
-// shows a live wavefrom, elapsed timer, and start/pause/stop controls
-
 class RecordScreen extends ConsumerWidget {
   const RecordScreen({super.key});
 
@@ -20,111 +17,184 @@ class RecordScreen extends ConsumerWidget {
     final notifier = ref.read(audioRecorderProvider.notifier);
     final theme = Theme.of(context);
 
-    // when recording stops, save the meeting and go to detail
     ref.listen<RecorderState>(audioRecorderProvider, (_, next) async {
       if (next.completedRecording != null) {
-        // 1. save meeting
         final meeting = await ref
             .read(meetingsProvider.notifier)
             .saveRecording(next.completedRecording!);
-
-        // 2. trigger processing separately - no circular dependency
         ref.read(processingProvider.notifier).enqueue(meeting.id);
-        
         notifier.reset();
-        if (context.mounted) context.go('/meeting/${meeting.id}');
+        if (context.mounted) context.push('/meeting/${meeting.id}');
       }
       if (next.error != null) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(next.error!), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(next.error!),
+            backgroundColor: theme.colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          ),
         );
       }
     });
 
     final elapsed = Duration(seconds: state.elapsedSeconds);
+    final isRecording = state.status == RecordingStatus.recording;
+    final isPaused = state.status == RecordingStatus.paused;
+    final isActive = isRecording || isPaused;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Record meeting')),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-        child: Column(
-          children: [
-            // status badge
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: state.status == RecordingStatus.recording
-                    ? Colors.red.withValues(alpha: 0.12)
-                    : theme.colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(20),
+      backgroundColor: theme.colorScheme.surfaceContainerLowest,
+      appBar: AppBar(
+        backgroundColor: theme.colorScheme.surfaceContainerLowest,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        title: Text(
+          'Record meeting',
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const SizedBox(height: 32),
+
+              // ── Status badge ─────────────────────────────────
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: isRecording
+                      ? theme.colorScheme.error.withOpacity(0.10)
+                      : isPaused
+                          ? theme.colorScheme.primary.withOpacity(0.10)
+                          : theme.colorScheme.surfaceContainerHigh,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isRecording
+                        ? theme.colorScheme.error.withOpacity(0.20)
+                        : isPaused
+                            ? theme.colorScheme.primary.withOpacity(0.20)
+                            : theme.colorScheme.outlineVariant,
+                    width: 0.5,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (isRecording) ...[
+                      _PulsingDot(color: theme.colorScheme.error),
+                      const SizedBox(width: 8),
+                    ] else if (isPaused) ...[
+                      Icon(
+                        Icons.pause_rounded,
+                        size: 12,
+                        color: theme.colorScheme.primary,
+                      ),
+                      const SizedBox(width: 6),
+                    ],
+                    Text(
+                      switch (state.status) {
+                        RecordingStatus.idle => 'Ready to record',
+                        RecordingStatus.recording => 'Recording',
+                        RecordingStatus.paused => 'Paused',
+                        RecordingStatus.stopped => 'Saving...',
+                      },
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: isRecording
+                            ? theme.colorScheme.error
+                            : isPaused
+                                ? theme.colorScheme.primary
+                                : theme.colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (state.status == RecordingStatus.recording)
-                    _PulsingDot(color: Colors.red),
-                  const SizedBox(width: 8),
-                  Text(switch (state.status) {
-                    RecordingStatus.idle => 'Ready to record',
-                    RecordingStatus.recording => 'Recording',
-                    RecordingStatus.paused => 'Paused',
-                    RecordingStatus.stopped => 'Recording saved',
-                  }, style: theme.textTheme.labelLarge),
-                ],
+
+              const SizedBox(height: 56),
+
+              // ── Elapsed timer ────────────────────────────────
+              Text(
+                elapsed.toTimerString(),
+                style: theme.textTheme.displayLarge?.copyWith(
+                  fontWeight: FontWeight.w200,
+                  letterSpacing: -2,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                  color: isActive
+                      ? theme.colorScheme.onSurface
+                      : theme.colorScheme.onSurfaceVariant,
+                ),
               ),
-            ),
 
-            const SizedBox(height: 48),
+              const SizedBox(height: 8),
 
-            // elapsed timer
-            Text(
-              elapsed.toTimerString(),
-              style: theme.textTheme.displayMedium?.copyWith(
-                fontWeight: FontWeight.w200,
-                fontFeatures: const [FontFeature.tabularFigures()],
+              // subtle label under timer
+              Text(
+                isRecording
+                    ? 'Recording in progress'
+                    : isPaused
+                        ? 'Recording paused'
+                        : 'Tap the button below to start',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
-            ),
 
-            const SizedBox(height: 48),
+              const SizedBox(height: 48),
 
-            // waveform
-            SizedBox(
-              height: 80,
-              child: AudioWaveform(
-                isActive: state.status == RecordingStatus.recording,
+              // ── Waveform ─────────────────────────────────────
+              SizedBox(
+                height: 80,
+                //padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: AudioWaveform(isActive: isRecording),
               ),
-            ),
 
-            const Spacer(),
+              const Spacer(),
 
-            // controls
-            RecordingControls(
-              state: state,
-              onStart: notifier.start,
-              onStop: notifier.stop,
-              onPause: notifier.pause,
-              onResume: notifier.resume,
-            ),
+              // ── Controls ─────────────────────────────────────
+              RecordingControls(
+                state: state,
+                onStart: notifier.start,
+                onStop: notifier.stop,
+                onPause: notifier.pause,
+                onResume: notifier.resume,
+              ),
 
-            const SizedBox(height: 48),
-          ],
+              const SizedBox(height: 48),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-// live indicator
+// ── Pulsing dot ──────────────────────────────────────────────────────────────
+
 class _PulsingDot extends StatefulWidget {
-  final Color color;
   const _PulsingDot({required this.color});
+  final Color color;
 
   @override
-  State<_PulsingDot> createState() => __PulsingDotState();
+  State<_PulsingDot> createState() => _PulsingDotState();
 }
 
-class __PulsingDotState extends State<_PulsingDot>
+class _PulsingDotState extends State<_PulsingDot>
     with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl;
 
@@ -133,7 +203,7 @@ class __PulsingDotState extends State<_PulsingDot>
     super.initState();
     _ctrl = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 1),
+      duration: const Duration(milliseconds: 900),
     )..repeat(reverse: true);
   }
 
@@ -145,11 +215,14 @@ class __PulsingDotState extends State<_PulsingDot>
 
   @override
   Widget build(BuildContext context) => FadeTransition(
-    opacity: _ctrl,
-    child: Container(
-      width: 8,
-      height: 8,
-      decoration: BoxDecoration(color: widget.color, shape: BoxShape.circle),
-    ),
-  );
+        opacity: _ctrl,
+        child: Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: widget.color,
+            shape: BoxShape.circle,
+          ),
+        ),
+      );
 }

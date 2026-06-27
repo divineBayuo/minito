@@ -2,21 +2,74 @@
 // using consumer widget
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:go_router/go_router.dart';
 import 'package:minito/core/theme/app_theme.dart';
-import 'package:minito/features/auth/presentation/auth_screen.dart' as auth;
+//import 'package:minito/features/auth/presentation/auth_screen.dart' as auth;
+import 'package:minito/features/auth/presentation/auth_screen.dart';
 import 'package:minito/features/auth/presentation/providers/auth_provider.dart';
-import 'package:minito/features/home/presentation/home_screen.dart' as home;
+//import 'package:minito/features/home/presentation/home_screen.dart' as home;
+import 'package:minito/features/home/presentation/home_screen.dart';
 import 'package:minito/features/meetings/presentation/meeting_detail_screen.dart';
 import 'package:minito/features/recording/presentation/record_screen.dart';
 import 'package:minito/features/recording/presentation/upload_screen.dart';
+//import 'package:path/path.dart';
+
+// bridge riverpod auth state with this notifier
+class _RouterNotifier extends ChangeNotifier {
+  final Ref _ref;
+
+  _RouterNotifier(this._ref) {
+    // whenever authProvider emits a new state, tell GoRouter to re-run redirect
+    _ref.listen<AuthState>(authProvider, (_, __) => notifyListeners());
+  }
+
+  bool get isLoggedIn => _ref.read(authProvider).isLoggedIn;
+}
+
+final _routerNotifierProvider = ChangeNotifierProvider<_RouterNotifier>(
+  (ref) => _RouterNotifier(ref),
+);
+
+// single stable router instance
+final routerProvider = Provider<GoRouter>((ref) {
+  final notifier = ref.watch(_routerNotifierProvider);
+
+  return GoRouter(
+    initialLocation: '/home',
+    refreshListenable: notifier,
+    redirect: (context, state) {
+      final isLoggedIn = notifier.isLoggedIn;
+      final goingToAuth = state.matchedLocation == '/auth';
+      if (!isLoggedIn && !goingToAuth) return '/auth';
+      if (isLoggedIn && goingToAuth) return '/home';
+      return null;
+    },
+    routes: [
+      GoRoute(path: '/auth', builder: (_, __) => const AuthScreen()),
+      ShellRoute(
+        builder: (context, state, child) => AppShell(child: child),
+        routes: [
+          GoRoute(path: '/home', builder: (_, __) => const HomeScreen()),
+          GoRoute(path: '/record', builder: (_, __) => const RecordScreen()),
+          GoRoute(path: '/upload', builder: (_, __) => const UploadScreen()),
+        ],
+      ),
+      GoRoute(
+        path: '/meeting/:id',
+        builder: (_, state) =>
+            MeetingDetailScreen(meetingId: state.pathParameters['id']!),
+      ),
+    ],
+  );
+});
 
 class Minito extends ConsumerWidget {
   const Minito({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final router = _buildRouter(ref);
+    final router = ref.watch(routerProvider);
 
     return MaterialApp.router(
       title: 'Minito',
@@ -28,7 +81,7 @@ class Minito extends ConsumerWidget {
     );
   }
 
-  GoRouter _buildRouter(WidgetRef ref) {
+ /*  GoRouter _buildRouter(WidgetRef ref) {
     return GoRouter(
       initialLocation: '/home',
       redirect: (context, state) {
@@ -57,7 +110,7 @@ class Minito extends ConsumerWidget {
         ),
       ],
     );
-  }
+  } */
 }
 
 // persistent bottom nav bar

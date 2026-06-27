@@ -24,18 +24,22 @@ final meetingsStreamProvider = StreamProvider<List<Meeting>>(
   (ref) => ref.watch(meetingRepositoryProvider).watchMeeting(),
 );
 
-final meetingByIdProvider =
-    FutureProvider.family<Meeting?, String>((ref, id) async {
+final meetingByIdProvider = FutureProvider.family<Meeting?, String>((
+  ref,
+  id,
+) async {
   return ref.watch(meetingRepositoryProvider).getMeeting(id);
 });
 
 final meetingOutputsProvider =
     FutureProvider.family<List<MeetingOutput>, String>((ref, meetingId) async {
-  return ref.watch(meetingRepositoryProvider).getOutputs(meetingId);
-});
+      return ref.watch(meetingRepositoryProvider).getOutputs(meetingId);
+    });
 
-final meetingTranscriptProvider =
-    FutureProvider.family<Transcript?, String>((ref, meetingId) async {
+final meetingTranscriptProvider = FutureProvider.family<Transcript?, String>((
+  ref,
+  meetingId,
+) async {
   return ref.watch(meetingRepositoryProvider).getTranscript(meetingId);
 });
 
@@ -50,7 +54,7 @@ class MeetingsNotifier extends Notifier<void> {
   final _uuid = const Uuid();
 
   @override
-  void build() {}  // no initial state needed — this notifier is action-only
+  void build() {} // no initial state needed — this notifier is action-only
 
   MeetingRepository get _repo => ref.read(meetingRepositoryProvider);
 
@@ -85,6 +89,12 @@ class MeetingsNotifier extends Notifier<void> {
   }
 
   Future<void> deleteMeeting(String id) => _repo.deleteMeeting(id);
+
+  Future<void> renameMeeting(String id, String newTitle) async {
+    final meeting = await _repo.getMeeting(id);
+    if (meeting == null) return;
+    await _repo.saveMeeting(meeting.copyWith(title: newTitle));
+  }
 
   String _generateTitle(DateTime dt) {
     final date =

@@ -6,9 +6,6 @@ import 'package:minito/core/utils/audio_utils.dart';
 import 'package:minito/features/ai_processing/presentation/providers/processing_provider.dart';
 import 'package:minito/features/meetings/presentation/providers/meetings_provider.dart';
 
-// let the user pick an existing audio file from the device and import it
-// as a new meeting - identical pipeline as live recording
-
 class UploadScreen extends ConsumerStatefulWidget {
   const UploadScreen({super.key});
 
@@ -46,15 +43,11 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
     }
 
     try {
-      // 1. save meeting
       final meeting = await ref
           .read(meetingsProvider.notifier)
           .importAudioFile(file.path!, file.name);
-
-      // 2. trigger processing separately
       ref.read(processingProvider.notifier).enqueue(meeting.id);
-
-      if (mounted) context.go('/meeting/${meeting.id}');
+      if (mounted) context.push('/meeting/${meeting.id}');
     } catch (e) {
       setState(() {
         _isLoading = false;
@@ -68,54 +61,195 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Upload recording')),
-      body: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Icon(
-              Icons.upload_file_rounded,
-              size: 80,
-              color: theme.colorScheme.primary.withValues(alpha: 0.6),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'Import an audio file',
-              style: theme.textTheme.headlineSmall,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Supported formats: ${AudioUtils.allowedUploadExtensions.join(', ')}',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 48),
+      backgroundColor: theme.colorScheme.surfaceContainerLowest,
+      appBar: AppBar(
+        backgroundColor: theme.colorScheme.surfaceContainerLowest,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        title: Text(
+          'Upload recording',
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Spacer(),
 
-            if (_error != null) ...[
+              // ── Drop zone illustration ────────────────────────
+              Center(
+                child: Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(28),
+                    border: Border.all(
+                      color: theme.colorScheme.primary.withOpacity(0.20),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Icon(
+                        Icons.audio_file_outlined,
+                        size: 52,
+                        color: theme.colorScheme.primary.withOpacity(0.5),
+                      ),
+                      Positioned(
+                        right: 22,
+                        bottom: 22,
+                        child: Container(
+                          width: 28,
+                          height: 28,
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primary,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.add_rounded,
+                            size: 18,
+                            color: theme.colorScheme.onPrimary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 28),
+
+              // ── Heading ───────────────────────────────────────
               Text(
-                _error!,
-                style: TextStyle(color: theme.colorScheme.error),
+                'Import an audio file',
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: -0.3,
+                ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 16),
-            ],
 
-            FilledButton(
-              onPressed: _isLoading ? null : _pickAndUpload,
-              child: _isLoading
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.folder_open_outlined),
-            ),
-          ],
+              const SizedBox(height: 10),
+
+              Text(
+                'Pick a recording from your device and\nMinito will transcribe and summarise it.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+
+              const SizedBox(height: 16),
+
+              // ── Supported formats pill row ─────────────────────
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 6,
+                children: AudioUtils.allowedUploadExtensions.map((ext) {
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceContainerHigh,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: theme.colorScheme.outlineVariant,
+                        width: 0.5,
+                      ),
+                    ),
+                    child: Text(
+                      ext.toUpperCase(),
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: 0.4,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+
+              const Spacer(),
+
+              // ── Error message ─────────────────────────────────
+              if (_error != null) ...[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.error.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: theme.colorScheme.error.withOpacity(0.20),
+                      width: 0.5,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.error_outline_rounded,
+                        size: 16,
+                        color: theme.colorScheme.error,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _error!,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.error,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+
+              // ── Primary button ────────────────────────────────
+              SizedBox(
+                height: 52,
+                child: FilledButton.icon(
+                  onPressed: _isLoading ? null : _pickAndUpload,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: theme.colorScheme.onPrimary,
+                    disabledBackgroundColor:
+                        theme.colorScheme.primary.withOpacity(0.4),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  icon: _isLoading
+                      ? SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: theme.colorScheme.onPrimary,
+                          ),
+                        )
+                      : const Icon(Icons.folder_open_outlined, size: 20),
+                  label: Text(
+                    _isLoading ? 'Importing...' : 'Choose a file',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 40),
+            ],
+          ),
         ),
       ),
     );

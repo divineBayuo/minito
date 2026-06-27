@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:minito/features/ai_processing/presentation/providers/processing_provider.dart';
 import 'package:minito/features/home/presentation/widgets/record_card.dart';
 import 'package:minito/features/meetings/presentation/providers/meetings_provider.dart';
 
@@ -25,194 +26,197 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     final meetingsAsync = ref.watch(meetingsStreamProvider);
     final theme = Theme.of(context);
-    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+    //final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
 
     return Scaffold(
       backgroundColor: theme.colorScheme.surfaceContainerLowest,
       body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.only(bottom: keyboardHeight),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ── Header ──────────────────────────────────────
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                child: Row(
-                  children: [
-                    // Logo mark — black square, orange accent dot
-                    Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        Container(
-                          width: 65,
-                          height: 65,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF000000),
-                            borderRadius: BorderRadius.circular(9),
-                          ),
-                          child: Center(
-                            child: /* Text(
-                              'm',
-                              style: TextStyle(
-                                fontFamily: 'Georgia',
-                                fontStyle: FontStyle.italic,
-                                fontSize: 20,
-                                color: Color(0xFFFFFFFF),
-                                height: 1,
-                              ),
-                            ), */ Image.asset(
-                              'assets/icon/minito_icon.png',
-                              width: 50,
-                              height: 50,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Header ──────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+              child: Row(
+                children: [
+                  // Logo mark — black square, orange accent dot
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        width: 35,
+                        height: 35,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF000000),
+                          borderRadius: BorderRadius.circular(9),
+                        ),
+                        child: Center(
+                          child: /* Text(
+                            'm',
+                            style: TextStyle(
+                              fontFamily: 'Georgia',
+                              fontStyle: FontStyle.italic,
+                              fontSize: 20,
+                              color: Color(0xFFFFFFFF),
+                              height: 1,
                             ),
+                          ), */ Image.asset(
+                            'assets/icon/minito_icon.png',
+                            width: 30,
+                            height: 30,
                           ),
                         ),
-                        // small orange accent dot
-                        Positioned(
-                          right: -3,
-                          top: -3,
-                          child: Container(
-                            width: 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.primary,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: theme.colorScheme.surfaceContainerLowest,
-                                width: 1.5,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(width: 10),
-                    Text(
-                      'Minito',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: -0.3,
-                        color: theme.colorScheme.onSurface,
-                        fontFamily: 'Bricolage Grotesque',
                       ),
+                      // small orange accent dot
+                      Positioned(
+                        right: -3,
+                        top: -3,
+                        child: Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primary,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: theme.colorScheme.surfaceContainerLowest,
+                              width: 1.5,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Minito',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: -0.3,
+                      color: theme.colorScheme.onSurface,
+                      fontFamily: 'Bricolage Grotesque',
                     ),
-                    const Spacer(),
-                    _IconButton(icon: Icons.settings_outlined, onTap: () {}),
-                  ],
-                ),
+                  ),
+                  const Spacer(),
+                  _IconButton(icon: Icons.settings_outlined, onTap: () {}),
+                ],
               ),
+            ),
 
-              const SizedBox(height: 16),
+            const SizedBox(height: 16),
 
-              // ── Search ───────────────────────────────────────
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: _SearchField(
-                  controller: _searchController,
-                  onChanged: (v) => setState(() => _query = v.toLowerCase()),
-                ),
+            // ── Search ───────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: _SearchField(
+                controller: _searchController,
+                onChanged: (v) => setState(() => _query = v.toLowerCase()),
               ),
+            ),
 
-              const SizedBox(height: 4),
+            const SizedBox(height: 4),
 
-              // ── List ─────────────────────────────────────────
-              Expanded(
-                child: meetingsAsync.when(
-                  data: (meetings) {
-                    final filtered = _query.isEmpty
-                        ? meetings
-                        : meetings
-                              .where(
-                                (m) => m.title.toLowerCase().contains(_query),
-                              )
-                              .toList();
+            // ── List ─────────────────────────────────────────
+            Expanded(
+              child: meetingsAsync.when(
+                data: (meetings) {
+                  final filtered = _query.isEmpty
+                      ? meetings
+                      : meetings
+                            .where(
+                              (m) => m.title.toLowerCase().contains(_query),
+                            )
+                            .toList();
 
-                    if (filtered.isEmpty) {
-                      return _EmptyState(isSearch: _query.isNotEmpty);
-                    }
+                  if (filtered.isEmpty) {
+                    return _EmptyState(isSearch: _query.isNotEmpty);
+                  }
 
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
-                          child: Row(
-                            children: [
-                              Text(
-                                'Recent',
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
+                        child: Row(
+                          children: [
+                            Text(
+                              'Recent',
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                                letterSpacing: 0.6,
+                                fontWeight: FontWeight.w500,
+                                fontFamily: 'Bricolage Grotesque',
+                              ),
+                            ),
+                            const Spacer(),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.primary.withOpacity(
+                                  0.12,
+                                ),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                '${filtered.length} meeting${filtered.length == 1 ? '' : 's'}',
                                 style: theme.textTheme.labelSmall?.copyWith(
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                  letterSpacing: 0.6,
+                                  color: theme.colorScheme.primary,
                                   fontWeight: FontWeight.w500,
                                   fontFamily: 'Bricolage Grotesque',
                                 ),
                               ),
-                              const Spacer(),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: theme.colorScheme.primary.withOpacity(
-                                    0.12,
-                                  ),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Text(
-                                  '${filtered.length} meeting${filtered.length == 1 ? '' : 's'}',
-                                  style: theme.textTheme.labelSmall?.copyWith(
-                                    color: theme.colorScheme.primary,
-                                    fontWeight: FontWeight.w500,
-                                    fontFamily: 'Bricolage Grotesque',
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                        Expanded(
-                          child: ListView.separated(
-                            padding: const EdgeInsets.fromLTRB(12, 4, 12, 24),
-                            itemCount: filtered.length,
-                            separatorBuilder: (_, __) =>
-                                const SizedBox(height: 8),
-                            itemBuilder: (context, i) {
-                              final meeting = filtered[i];
-                              return RecordingCard(
-                                meeting: meeting,
-                                onTap: () =>
-                                    context.go('/meeting/${meeting.id}'),
-                                onDelete: () => ref
-                                    .read(meetingsProvider.notifier)
-                                    .deleteMeeting(meeting.id),
-                              );
-                            },
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                  error: (e, _) => Center(
-                    child: Text(
-                      'Something went wrong.',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                        fontFamily: 'Bricolage Grotesque',
                       ),
-                    ),
-                  ),
-                  loading: () => Center(
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: theme.colorScheme.primary,
+                      Expanded(
+                        child: ListView.separated(
+                          padding: const EdgeInsets.fromLTRB(12, 4, 12, 24),
+                          itemCount: filtered.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 8),
+                          itemBuilder: (context, i) {
+                            final meeting = filtered[i];
+                            return RecordingCard(
+                              meeting: meeting,
+                              onTap: () =>
+                                  context.push('/meeting/${meeting.id}'),
+                              onDelete: () => ref
+                                  .read(meetingsProvider.notifier)
+                                  .deleteMeeting(meeting.id),
+                              onRename: (name) => ref
+                                  .read(meetingsProvider.notifier)
+                                  .renameMeeting(meeting.id, name),
+                              onRetry: () => ref
+                                  .read(processingProvider.notifier)
+                                  .enqueue(meeting.id),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  );
+                },
+                error: (e, _) => Center(
+                  child: Text(
+                    'Something went wrong.',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      fontFamily: 'Bricolage Grotesque',
                     ),
                   ),
                 ),
+                loading: () => Center(
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

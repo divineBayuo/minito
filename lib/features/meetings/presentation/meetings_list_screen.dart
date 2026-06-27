@@ -81,7 +81,7 @@ class _MeetingsListScreenState extends ConsumerState<MeetingsListScreen> {
               final m = filtered[i];
               return RecordingCard(
                 meeting: m,
-                onTap: () => context.go('/meeting/${m.id}'),
+                onTap: () => context.push('/meeting/${m.id}'),
                 onDelete: () =>
                     ref.read(meetingsProvider.notifier).deleteMeeting(m.id),
               );
