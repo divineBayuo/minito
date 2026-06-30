@@ -62,7 +62,7 @@ class AiRemoteDatasource {
     }
   }
 
-  // Claude doc generation
+  /* // Claude doc generation
   Future<String> generateDocument({
     required String transcript,
     required OutputType outputType,
@@ -101,10 +101,59 @@ class AiRemoteDatasource {
         statusCode: e.response?.statusCode,
       );
     }
+  } */
+
+  // Gemini doc generation - replacing Claude
+  Future<String> generateDocument({
+    required String transcript,
+    required OutputType outputType,
+  }) async {
+    final prompt = _buildPrompt(transcript, outputType);
+    final url = ApiConstants.geminiEndpoint(ApiConstants.geminiModel);
+
+    try {
+      final response = await _dio.post(
+        url,
+        queryParameters: {'key': ApiConstants.geminiApiKey},
+        data: {
+          'contents': [
+            {
+              'role': 'user',
+              'parts': {'text': prompt},
+            },
+          ],
+          'generationConfig': {'maxOutputTokens': 4096, 'temperature': 0.4},
+        },
+        options: Options(headers: {'content-type': 'application/json'}),
+      );
+
+      final candidates = response.data['candidates'] as List?;
+      if (candidates == null || candidates.isEmpty) {
+        throw const ServerException(
+          message: 'No candidates in Gemini response',
+        );
+      }
+
+      final parts = candidates.first['content']?['parts'] as List?;
+      final textPart = parts?.firstWhere(
+        (p) => p['text'] != null,
+        orElse: () =>
+            throw const ServerException(message: 'No text in Gemini response'),
+      );
+
+      return textPart['text'] as String;
+    } on DioException catch (e) {
+      // Gemini puts useful error detail here; we want to pull that out
+      final apiMessage = e.response?.data?['error']?['message'] as String?;
+      throw ServerException(
+        message: apiMessage ?? e.message ?? 'Gemini API error',
+        statusCode: e.response?.statusCode,
+      );
+    }
   }
 
   // Prompt routing
-  String _buildPrompt(String transcript, OutputType type) => switch(type) {
+  String _buildPrompt(String transcript, OutputType type) => switch (type) {
     OutputType.minutes => minutesPrompt(transcript),
     OutputType.notes => notesPrompt(transcript),
     OutputType.report => reportPrompt(transcript),

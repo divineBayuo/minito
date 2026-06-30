@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:minito/core/constants/api_constants.dart';
 import 'package:minito/features/ai_processing/data/ai_remote_datasource.dart';
 import 'package:minito/features/ai_processing/data/ai_repository_impl.dart';
 import 'package:minito/features/ai_processing/domain/ai_repository.dart';
@@ -130,7 +131,8 @@ class ProcessingNotifier extends Notifier<ProcessingState> {
           type: doc.type,
           markdownContent: doc.markdown,
           generatedAt: DateTime.now(),
-          modelVersion: 'claude-sonnet-4-20250514',
+          //modelVersion: 'claude-sonnet-4-20250514',
+          modelVersion: ApiConstants.geminiModel,
         ),
       );
     }

@@ -79,3 +79,6 @@ GoogleService-Info.plist
 # iOS
 /ios/Flutter/Generated.xcconfig
 /ios/Flutter/flutter_export_environment.sh
+
+# run shell file 
+run_dev.sh

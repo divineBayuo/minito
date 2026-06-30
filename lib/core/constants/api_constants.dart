@@ -6,6 +6,11 @@ abstract class ApiConstants {
   static const claudeModel = 'claude-sonnet-4-20260527';
   static const claudeMaxTokens = 4096;
 
+  // Gemini (replacing Claude)
+  static const geminiApiKey = String.fromEnvironment('GEMINI_API_KEY');
+  static const geminiModel = 'gemini-2.5-flash';
+  static String geminiEndpoint(String model) => 'https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent';
+
   // -- openAI whisper
   static const whisperBaseUrl = 'https://api.openai.com/v1';
   static const whisperEndpoint = '$whisperBaseUrl/audio/transcriptions';
