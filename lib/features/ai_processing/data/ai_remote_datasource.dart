@@ -35,12 +35,35 @@ class AiRemoteDatasource {
       throw ServerException(message: 'Audio file not found: $filePath');
     }
 
+    // detect extension and map to correct MIME type
+    final ext = filePath.split('.').last.toLowerCase();
+    final (filename, contentType) = switch (ext) {
+      'mp3' => ('audio.mp3', MediaType('audio', 'mpeg')),
+      'mp4' => ('audio.mp4', MediaType('audio', 'mp4')),
+      'm4a' => ('audio.m4a', MediaType('audio', 'mp4')),
+      'wav' => ('audio.wav', MediaType('audio', 'wav')),
+      'webm' => ('audio.webm', MediaType('audio', 'webm')),
+      'ogg' => ('audio.ogg', MediaType('audio', 'ogg')),
+      'flac' => ('audio.flac', MediaType('audio', 'flac')),
+      'aac' => ('audio.aac', MediaType('audio', 'aac')),
+      _ => ('audio.m4a', MediaType('audio', 'mp4')),
+    };
+
+    // guard: reject obv empty files before hitting API
+    final fileSize = await file.length();
+    if (fileSize < 1000) {
+      throw ServerException(
+        message:
+            'Audio file is too small (${fileSize}B) - was the microphone permission granted?',
+      );
+    }
+
     final formData = FormData.fromMap({
       'model': ApiConstants.whisperModel,
       'file': await MultipartFile.fromFile(
         filePath,
-        filename: 'audio.m4a',
-        contentType: MediaType('audio', 'm4a'),
+        filename: filename,
+        contentType: contentType,
       ),
       'response_format': 'text',
     });
@@ -55,8 +78,12 @@ class AiRemoteDatasource {
       );
       return response.data as String;
     } on DioException catch (e) {
+      // show Whisper's actual error body
+      final apiError = e.response?.data is Map
+          ? (e.response!.data['error']?['message'] as String?)
+          : null;
       throw ServerException(
-        message: e.message ?? 'Whisper API error',
+        message: apiError ?? e.message ?? 'Whisper API error',
         statusCode: e.response?.statusCode,
       );
     }

@@ -11,15 +11,20 @@ abstract class ApiConstants {
   static const geminiModel = 'gemini-2.5-flash';
   static String geminiEndpoint(String model) => 'https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent';
 
-  // -- openAI whisper
+  // Groq (replacing whisper)
+  static const whisperEndpoint = 'https://api.groq.com/openai/v1/audio/transcriptions';
+  static const whisperModel = 'whisper-large-v3';
+  static const openApiKey = String.fromEnvironment('GROQ_API_KEY');
+
+  /* // -- openAI whisper
   static const whisperBaseUrl = 'https://api.openai.com/v1';
   static const whisperEndpoint = '$whisperBaseUrl/audio/transcriptions';
-  static const whisperModel = 'whisper-1';
+  static const whisperModel = 'whisper-1'; */
 
   // -- firebase
   static const firebaseAudioBucket = 'audio-recordings';
   static const claudeApiKey = String.fromEnvironment('CLAUDE_API_kEY');
-  static const openApiKey = String.fromEnvironment('OPENAI_API_KEY');
+  //static const openApiKey = String.fromEnvironment('OPENAI_API_KEY');
 
   // Timeouts
   static const connectTimeoutsMs = 30000;

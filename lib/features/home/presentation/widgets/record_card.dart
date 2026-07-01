@@ -346,7 +346,7 @@ class RecordingCard extends StatelessWidget {
   String _statusLabel(MeetingStatus s) => switch (s) {
         MeetingStatus.transcribing => 'Transcribing...',
         MeetingStatus.generating => 'Generating documents...',
-        MeetingStatus.failed => 'Failed — tap ••• to retry',
+        MeetingStatus.failed => 'Failed — Try again',
         _ => '',
       };
 
