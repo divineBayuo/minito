@@ -85,6 +85,24 @@ class AuthRemoteDatasource {
     }
   }
 
+  Future<void> updateDisplayName(String name) async {
+    try {
+      await _auth.currentUser?.updateDisplayName(name);
+      await _auth.currentUser?.reload();
+    } on FirebaseAuthException catch (e) {
+      throw AuthException(message: e.message ?? e.code);
+    }
+  }
+
+  Future<void> deleteAccount() async {
+    try {
+      await _auth.currentUser?.delete();
+      await _googleSignIn.signOut();
+    } on FirebaseAuthException catch (e) {
+      throw AuthException(message: e.message ?? e.code);
+    }
+  }
+
   // mapping
   AppUser? _mapUser(User? user) {
     if (user == null) return null;

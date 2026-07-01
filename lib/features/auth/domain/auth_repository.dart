@@ -31,4 +31,8 @@ abstract class AuthRepository {
 
   // sends a password-reset email to email
   Future<void> sendPasswordReset(String email);
+
+  Future<void> updateDisplayName(String name);
+  Future<void> deleteAccount();
+  // sendPasswordReset already exists
 }

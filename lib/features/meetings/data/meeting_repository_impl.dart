@@ -26,6 +26,13 @@ class MeetingRepositoryImpl implements MeetingRepository {
     return row?.toDomain();
   }
 
+  // one-shot snapshot - used by storage stats and bulk ops
+  @override
+  Future<List<Meeting>> getMeetings() async {
+    final rows = await _db.getAllMeetings();
+    return rows.map((r) => r.toDomain()).toList();
+  }
+
   @override
   Future<void> saveMeeting(Meeting meeting) => _db.upsertMeeting(
         // ✅ MeetingEntriesCompanion — matches renamed table class MeetingEntries
@@ -44,8 +51,10 @@ class MeetingRepositoryImpl implements MeetingRepository {
   @override
   Future<void> deleteMeeting(String id) => _db.deleteMeetingById(id);
 
-  // ── Transcripts ───────────────────────────────────────────────────────────
+  @override
+  Future<void> deleteAllMeetings() => _db.delete(_db.meetingEntries).go();
 
+  // ── Transcripts ───────────────────────────────────────────────────────────
   @override
   Future<Transcript?> getTranscript(String meetingId) async {
     final row = await _db.getTranscriptByMeetingId(meetingId);

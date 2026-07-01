@@ -57,7 +57,9 @@ class MeetingOutputEntries extends Table {
 
 // ── Database ──────────────────────────────────────────────────────────────────
 
-@DriftDatabase(tables: [MeetingEntries, TranscriptEntries, MeetingOutputEntries])
+@DriftDatabase(
+  tables: [MeetingEntries, TranscriptEntries, MeetingOutputEntries],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
@@ -74,14 +76,12 @@ class AppDatabase extends _$AppDatabase {
 
   // ── Meetings ────────────────────────────────────────────────────────────────
 
-  Stream<List<MeetingEntry>> watchAllMeetings() =>
-      (select(meetingEntries)
-            ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
-          .watch();
+  Stream<List<MeetingEntry>> watchAllMeetings() => (select(
+    meetingEntries,
+  )..orderBy([(t) => OrderingTerm.desc(t.createdAt)])).watch();
 
   Future<MeetingEntry?> getMeetingById(String id) =>
-      (select(meetingEntries)..where((t) => t.id.equals(id)))
-          .getSingleOrNull();
+      (select(meetingEntries)..where((t) => t.id.equals(id))).getSingleOrNull();
 
   Future<void> upsertMeeting(MeetingEntriesCompanion entry) =>
       into(meetingEntries).insertOnConflictUpdate(entry);
@@ -89,24 +89,26 @@ class AppDatabase extends _$AppDatabase {
   Future<void> deleteMeetingById(String id) =>
       (delete(meetingEntries)..where((t) => t.id.equals(id))).go();
 
+  // Add to AppDatabase in meeting_local_datasource.dart
+  Future<List<MeetingEntry>> getAllMeetings() => select(meetingEntries).get();
+
   Future<void> updateMeetingStatus(
     String id,
     String status, {
     String? errorMessage,
-  }) =>
-      (update(meetingEntries)..where((t) => t.id.equals(id))).write(
-        MeetingEntriesCompanion(
-          status: Value(status),
-          errorMessage: Value(errorMessage),
-        ),
-      );
+  }) => (update(meetingEntries)..where((t) => t.id.equals(id))).write(
+    MeetingEntriesCompanion(
+      status: Value(status),
+      errorMessage: Value(errorMessage),
+    ),
+  );
 
   // ── Transcripts ─────────────────────────────────────────────────────────────
 
   Future<TranscriptEntry?> getTranscriptByMeetingId(String meetingId) =>
-      (select(transcriptEntries)
-            ..where((t) => t.meetingId.equals(meetingId)))
-          .getSingleOrNull();
+      (select(
+        transcriptEntries,
+      )..where((t) => t.meetingId.equals(meetingId))).getSingleOrNull();
 
   Future<void> upsertTranscript(TranscriptEntriesCompanion entry) =>
       into(transcriptEntries).insertOnConflictUpdate(entry);
@@ -114,9 +116,9 @@ class AppDatabase extends _$AppDatabase {
   // ── Outputs ─────────────────────────────────────────────────────────────────
 
   Future<List<MeetingOutputEntry>> getOutputsByMeetingId(String meetingId) =>
-      (select(meetingOutputEntries)
-            ..where((t) => t.meetingId.equals(meetingId)))
-          .get();
+      (select(
+        meetingOutputEntries,
+      )..where((t) => t.meetingId.equals(meetingId))).get();
 
   Future<void> upsertOutput(MeetingOutputEntriesCompanion entry) =>
       into(meetingOutputEntries).insertOnConflictUpdate(entry);
@@ -127,35 +129,35 @@ class AppDatabase extends _$AppDatabase {
 
 extension MeetingRowMapper on MeetingEntry {
   Meeting toDomain() => Meeting(
-        id: id,
-        title: title,
-        createdAt: createdAt,
-        audioFilePath: audioFilePath,
-        durationSeconds: durationSeconds,
-        status: MeetingStatus.values.byName(status),
-        errorMessage: errorMessage,
-        tags: List<String>.from(jsonDecode(tags) as List),
-      );
+    id: id,
+    title: title,
+    createdAt: createdAt,
+    audioFilePath: audioFilePath,
+    durationSeconds: durationSeconds,
+    status: MeetingStatus.values.byName(status),
+    errorMessage: errorMessage,
+    tags: List<String>.from(jsonDecode(tags) as List),
+  );
 }
 
 extension TranscriptRowMapper on TranscriptEntry {
   Transcript toDomain() => Transcript(
-        id: id,
-        meetingId: meetingId,
-        fullText: fullText,
-        languageCode: languageCode,
-        segments: const [],
-        createdAt: createdAt,
-      );
+    id: id,
+    meetingId: meetingId,
+    fullText: fullText,
+    languageCode: languageCode,
+    segments: const [],
+    createdAt: createdAt,
+  );
 }
 
 extension OutputRowMapper on MeetingOutputEntry {
   MeetingOutput toDomain() => MeetingOutput(
-        id: id,
-        meetingId: meetingId,
-        type: OutputType.values.byName(type),
-        markdownContent: markdownContent,
-        generatedAt: generatedAt,
-        modelVersion: modelVersion,
-      );
+    id: id,
+    meetingId: meetingId,
+    type: OutputType.values.byName(type),
+    markdownContent: markdownContent,
+    generatedAt: generatedAt,
+    modelVersion: modelVersion,
+  );
 }

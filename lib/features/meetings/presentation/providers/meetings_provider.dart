@@ -90,6 +90,9 @@ class MeetingsNotifier extends Notifier<void> {
 
   Future<void> deleteMeeting(String id) => _repo.deleteMeeting(id);
 
+  // Add to MeetingsNotifier:
+  Future<void> deleteAllMeetings() => _repo.deleteAllMeetings();
+
   Future<void> renameMeeting(String id, String newTitle) async {
     final meeting = await _repo.getMeeting(id);
     if (meeting == null) return;

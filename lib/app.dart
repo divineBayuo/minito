@@ -13,6 +13,8 @@ import 'package:minito/features/home/presentation/home_screen.dart';
 import 'package:minito/features/meetings/presentation/meeting_detail_screen.dart';
 import 'package:minito/features/recording/presentation/record_screen.dart';
 import 'package:minito/features/recording/presentation/upload_screen.dart';
+import 'package:minito/features/settings/presentation/providers/settings_provider.dart';
+import 'package:minito/features/settings/presentation/settings_screen.dart';
 //import 'package:path/path.dart';
 
 // bridge riverpod auth state with this notifier
@@ -53,6 +55,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(path: '/home', builder: (_, __) => const HomeScreen()),
           GoRoute(path: '/record', builder: (_, __) => const RecordScreen()),
           GoRoute(path: '/upload', builder: (_, __) => const UploadScreen()),
+          GoRoute(path: '/settings', builder: (_, __) => const SettingsScreen())
         ],
       ),
       GoRoute(
@@ -70,12 +73,13 @@ class Minito extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
+    final themeMode = ref.watch(themeModeProvider);
 
     return MaterialApp.router(
       title: 'Minito',
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
-      themeMode: ThemeMode.system,
+      themeMode: themeMode,
       routerConfig: router,
       debugShowCheckedModeBanner: false,
     );

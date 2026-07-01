@@ -114,6 +114,33 @@ class AuthNotifier extends Notifier<AuthState> {
     await _repo.signOut();
     state = const AuthState();
   }
+
+  // Add these three methods inside AuthNotifier:
+
+Future<void> updateDisplayName(String name) async {
+  try {
+    await _repo.updateDisplayName(name);
+  } catch (e) {
+    state = state.copyWith(error: e.toString());
+  }
+}
+
+Future<void> sendPasswordReset(String email) async {
+  try {
+    await _repo.sendPasswordReset(email);
+  } catch (e) {
+    state = state.copyWith(error: e.toString());
+  }
+}
+
+Future<void> deleteAccount() async {
+  try {
+    await _repo.deleteAccount();
+    state = const AuthState();
+  } catch (e) {
+    state = state.copyWith(error: e.toString());
+  }
+}
 }
 
 final authProvider = NotifierProvider<AuthNotifier, AuthState>(

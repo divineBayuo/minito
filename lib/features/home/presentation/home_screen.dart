@@ -97,7 +97,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                   ),
                   const Spacer(),
-                  _IconButton(icon: Icons.settings_outlined, onTap: () {}),
+                  _IconButton(
+                    icon: Icons.settings_outlined,
+                    onTap: () => context.push('/settings'),
+                  ),
                 ],
               ),
             ),

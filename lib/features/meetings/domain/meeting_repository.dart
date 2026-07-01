@@ -10,11 +10,17 @@ abstract class MeetingRepository {
   // returns a single meeting by ID
   Future<Meeting?> getMeeting(String id);
 
+  // returns all meetings
+  Future<List<Meeting>> getMeetings();
+
   // inserts or replaces a meeting record
   Future<void> saveMeeting(Meeting meeting);
 
   // permanently deletes the meeting and all associated outputs
   Future<void> deleteMeeting(String id);
+
+  // permanently delete all meetings
+  Future<void> deleteAllMeetings();
 
   // returns the transcript for meetingId, or null if not yet available
   Future<Transcript?> getTranscript(String meetingId);
